@@ -111,7 +111,11 @@ func (s *server) ListenAndServe() error {
 
 func main() {
 	c := newCache()
-	addr := ":3000"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	addr := ":" + port
 	srv := newServer(addr, c)
 	log.Fatal(srv.ListenAndServe())
 }

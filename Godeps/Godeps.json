@@ -1,0 +1,19 @@
+{
+	"ImportPath": "github.com/clutchski/junkyard",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v75",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/gorilla/handlers",
+			"Rev": "a24b39a6a2c8a7af2fe664dd4573205c99904035"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Comment": "v1.1-27-g757bef9",
+			"Rev": "757bef944d0f21880861c2dd9c871ca543023cba"
+		}
+	]
+}
