@@ -9,9 +9,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 )
 
 type cache struct {
@@ -52,26 +49,39 @@ func (c *cache) Keys() []string {
 type server struct {
 	addr  string
 	cache *cache
-	r     *mux.Router
+	mux   *http.ServeMux
 }
 
 func newServer(addr string, c *cache) *server {
-	r := mux.NewRouter()
+	mux := http.NewServeMux()
 
 	srv := server{
 		addr:  addr,
-		r:     r,
+		mux:   mux,
 		cache: c,
 	}
-	srv.r.HandleFunc("/junk/{key}", srv.get)
-	srv.r.HandleFunc("/", srv.post).Methods("POST")
-	srv.r.HandleFunc("/", srv.index)
+	mux.HandleFunc("/", srv.index)
 	return &srv
 }
 
+func (s *server) index(w http.ResponseWriter, r *http.Request) {
+	switch {
+	case r.Method == "GET":
+		s.get(w, r)
+	case r.Method == "POST":
+		s.post(w, r)
+	default:
+		http.Error(w, "bad request", 400)
+	}
+}
+
 func (s *server) get(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	key := vars["key"]
+	if r.URL.Path == "/" {
+		io.WriteString(w, "welcome to the junkyard\n")
+		return
+	}
+
+	key := r.URL.Path[1:]
 	if key == "" {
 		http.Error(w, "missing key", 400)
 		return
@@ -83,14 +93,12 @@ func (s *server) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// FIXME catch errors
 	w.Write(body)
 }
 
-func (s *server) index(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "welcome to the junkyard\n")
-}
-
 func (s *server) post(w http.ResponseWriter, r *http.Request) {
+	// FIXME max size
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error reading body:%s", err), 500)
@@ -99,14 +107,13 @@ func (s *server) post(w http.ResponseWriter, r *http.Request) {
 
 	hash := fmt.Sprintf("%x", md5.Sum(body))
 	s.cache.Add(hash, body)
-	path := fmt.Sprintf("%s/junk/%s\n", r.Host, hash)
+	path := fmt.Sprintf("%s/%s\n", r.Host, hash)
 	io.WriteString(w, path)
 }
 
 func (s *server) ListenAndServe() error {
 	log.Printf("running on %s", s.addr)
-	logged := handlers.LoggingHandler(os.Stderr, s.r)
-	return http.ListenAndServe(s.addr, logged)
+	return http.ListenAndServe(s.addr, s.mux)
 }
 
 func main() {
