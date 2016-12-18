@@ -8,43 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
+	"time"
 )
-
-type cache struct {
-	mu sync.Mutex
-	m  map[string][]byte
-}
-
-func newCache() *cache {
-	return &cache{
-		m: make(map[string][]byte),
-	}
-
-}
-
-func (c *cache) Add(k string, b []byte) {
-	c.mu.Lock()
-	c.m[k] = b
-	c.mu.Unlock()
-}
-
-func (c *cache) Get(k string) []byte {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.m[k]
-}
-
-func (c *cache) Keys() []string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	keys := make([]string, 0, len(c.m))
-	for k := range c.m {
-		keys = append(keys, k)
-	}
-	return keys
-}
 
 type server struct {
 	addr  string
@@ -93,7 +58,7 @@ func (s *server) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) post(w http.ResponseWriter, r *http.Request) {
-	// FIXME max size
+	// FIXME permit max size
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error reading body:%s", err), 500)
@@ -112,7 +77,9 @@ func (s *server) ListenAndServe() error {
 }
 
 func main() {
-	c := newCache()
+	size := 1000
+	expiry := time.Minute * 15
+	c := newCache(size, expiry)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
