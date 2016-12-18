@@ -77,19 +77,14 @@ func (s *server) index(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) get(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
-		io.WriteString(w, "welcome to the junkyard\n")
+		io.WriteString(w, os.Args[0]+"\n")
 		return
 	}
 
 	key := r.URL.Path[1:]
-	if key == "" {
-		http.Error(w, "missing key", 400)
-		return
-	}
-
 	body := s.cache.Get(key)
 	if len(body) == 0 {
-		http.Error(w, "unknown junk", 400)
+		http.Error(w, "not found", 404)
 		return
 	}
 

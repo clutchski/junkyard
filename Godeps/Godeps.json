@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/clutchski/junkyard",
+	"ImportPath": "github.com/clutchski/usrbin",
 	"GoVersion": "go1.7",
 	"GodepVersion": "v75",
 	"Deps": []
