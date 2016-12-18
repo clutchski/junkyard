@@ -1,0 +1,6 @@
+{
+	"ImportPath": "github.com/clutchski/junkyard",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v75",
+	"Deps": []
+}
